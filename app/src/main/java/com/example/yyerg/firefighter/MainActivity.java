@@ -30,10 +30,21 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     final String APP_TAG = "Firefighter";
@@ -101,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mHandler = new Handler();
         mScanning = true;
         setupBLE();
+        Thread thread = new Thread(httpThread);
+        thread.start();
     }
 
     @Override
@@ -141,6 +154,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         scanLeDevice(true);
     }
+
+    private Runnable httpThread = new Runnable() {
+        public void run() {
+            sendPostDataToInternet();
+        }
+    };
+
+    private void sendPostDataToInternet() {
+        CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
+        try {
+            URL url = new URL("http://chasewind.co/yyergg/test.php");
+            String sql = URLEncoder.encode("username", "UTF-8")
+                    + "=" + URLEncoder.encode("yyergg", "UTF-8");
+            sql += "&" + URLEncoder.encode("type", "UTF-8")
+                    + "=" + URLEncoder.encode("heartrate", "UTF-8");
+            sql += "&" + URLEncoder.encode("value", "UTF-8")
+                    + "=" + URLEncoder.encode("133", "UTF-8");
+
+            URLConnection conn = url.openConnection();
+            conn.setDoOutput(true);
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(sql);
+            Log.d(APP_TAG, "finish "+sql);
+        }catch(Exception e){
+            Log.d(APP_TAG,e.toString());
+        }
+    }
+
 
     private void scanLeDevice(final boolean enable) {
         mLeDevices.clear();
@@ -342,7 +383,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (ACTION_DATA_AVAILABLE.equals(action)) {
                 Bundle data = intent.getExtras();
-                displayData((byte[])data.get(ACTION_DATA_AVAILABLE));
+                try {
+                    displayData((byte[])data.get(ACTION_DATA_AVAILABLE));
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -351,9 +396,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         this.tvStatus.setText("disconnected");
     }
 
-    void displayData(byte[] data){
+    void displayData(byte[] data) throws MalformedURLException {
         Integer i = ByteBuffer.wrap(data).getInt();
-        Log.d(APP_TAG,"displayData"+i.toString());
+        Log.d(APP_TAG, "displayData" + i.toString());
         this.tvStatus.setText(i.toString());
     }
 
@@ -393,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float azimuth_angle = event.values[0];
         float pitch_angle = event.values[1];
         float roll_angle = event.values[2];
-        Log.d(APP_TAG,Float.toString(azimuth_angle)+" "+Float.toString(pitch_angle)+" "+Float.toString(roll_angle));
+        //Log.d(APP_TAG,Float.toString(azimuth_angle)+" "+Float.toString(pitch_angle)+" "+Float.toString(roll_angle));
     }
 
     @Override
