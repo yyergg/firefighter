@@ -10,11 +10,90 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.example.yyerg.firefighter.MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:background="#000000"
+    >
 
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="800px"
+        android:layout_height="170px"
+        android:id="@+id/frameNotice"
+        android:layout_margin="20px"
+        >
+
+        <ImageView
+            android:id="@+id/ivText"
+            android:layout_width= "fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/text"
+            />
+
+        <TextView
+            android:id="@+id/tvNotice"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="After shock will occur in 10 seconds, headeast for exit on the right."
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="15px"
+            android:textAlignment="center">
+            <requestFocus></requestFocus>
+        </TextView>
+    </FrameLayout>
+
+
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="200px"
+        android:layout_height="200px"
+        android:layout_below="@id/frameNotice"
+        android:id="@+id/frameHeartRate"
+        android:layout_marginLeft="50px"
+        android:layout_marginRight="50px">
+
+        <ImageView
+            android:id="@+id/ivHeartRate"
+            android:layout_width= "fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/heartrate"
+            />
+
+        <TextView
+            android:id="@+id/tvHeartRate"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:textSize="30sp"
+            android:layout_marginLeft="30px"
+            android:layout_marginTop="60px"
+            android:layout_marginRight="30px"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center">
+            <requestFocus></requestFocus>
+        </TextView>
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/ivCompass"
+        android:layout_width= "200px"
+        android:layout_height="200px"
+        android:layout_toRightOf="@id/frameHeartRate"
+        android:layout_below="@id/frameNotice"
+        android:src="@drawable/compass"
+
+        />
+
+    <ImageView
+        android:id="@+id/ivOxygen"
+        android:layout_width= "200px"
+        android:layout_height="200px"
+        android:layout_toRightOf="@id/ivCompass"
+        android:layout_below="@id/frameNotice"
+        android:src="@drawable/air"
+        android:layout_marginLeft="50px"
+        android:layout_marginRight="20px"
+        />
+
 </RelativeLayout>

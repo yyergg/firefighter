@@ -13,6 +13,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -27,23 +31,24 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpResponse;
 
 import org.apache.http.NameValuePair;
-
-import org.apache.http.client.ClientProtocolException;
 
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 
@@ -93,38 +98,42 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private BluetoothGattCharacteristic mLeHeartRateCharacteristic;
     private Handler mHandler;
 
-    private TextView tvStatus;
+    private TextView tvHeartRate;
+    private ImageView ivCompass;
 
     private SensorManager mSensorManager;
     private Sensor orientation;
+
+    private Integer dataHeartRate;
+    private Float dataOrientation;
+    private Float dataX;
+    private Float dataY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
 
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         orientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 
+        tvHeartRate = (TextView) this.findViewById(R.id.tvHeartRate);
+        tvHeartRate.setText("00");
 
-        tvStatus = (TextView) this.findViewById(R.id.tvStatus);
-        tvStatus.setText("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        ivCompass = (ImageView) this.findViewById(R.id.ivCompass);
+        ivCompass.setMaxHeight(200);
+        ivCompass.setMaxWidth(200);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
         mHandler = new Handler();
         mScanning = true;
         setupBLE();
-        Thread thread = new Thread(httpThread);
-        thread.start();
+        ScheduledExecutorService scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
+
+        final ScheduledFuture httpHandle =
+                scheduleTaskExecutor.scheduleAtFixedRate(httpThread, 5, 5, TimeUnit.SECONDS);
+
     }
 
     @Override
@@ -172,11 +181,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     };
 
+
     private void sendPostDataToInternet() {
-        HttpPost httpRequest = new HttpPost("http://chasewind.co/yyergg/test.php");
+        HttpPost httpRequest = new HttpPost("http://chasewind.co/yyergg/android.php");
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         try {
-
+            params.add(new BasicNameValuePair("username", "Willian Su"));
+            params.add(new BasicNameValuePair("type", "heartrate"));
+            params.add(new BasicNameValuePair("value", "96"));
             httpRequest.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
             HttpResponse httpResponse = new DefaultHttpClient().execute(httpRequest);
             if (httpResponse.getStatusLine().getStatusCode() == 200)
@@ -186,18 +198,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Log.d(APP_TAG,strResult);
 
             }
-//            URL url = new URL("http://chasewind.co/yyergg/test.php");
-//            String sql = URLEncoder.encode("username", "UTF-8")
-//                    + "=" + URLEncoder.encode("yyergg", "UTF-8");
-//            sql += "&" + URLEncoder.encode("type", "UTF-8")
-//                    + "=" + URLEncoder.encode("heartrate", "UTF-8");
-//            sql += "&" + URLEncoder.encode("value", "UTF-8")
-//                    + "=" + URLEncoder.encode("133", "UTF-8");
-
-//            URLConnection conn = url.openConnection();
-//            conn.setDoOutput(true);
-//            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-//            wr.write(sql);
         }catch(Exception e){
             Log.d(APP_TAG,e.toString());
         }
@@ -404,28 +404,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (ACTION_DATA_AVAILABLE.equals(action)) {
                 Bundle data = intent.getExtras();
-                try {
-                    displayData((byte[])data.get(ACTION_DATA_AVAILABLE));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                displayData((byte[])data.get(ACTION_DATA_AVAILABLE));
             }
         }
     };
 
     void clearUI(){
-        this.tvStatus.setText("disconnected");
+        //this.tvHeartRate.setText("disconnected");
     }
 
-    void displayData(byte[] data) throws MalformedURLException {
+    void displayData(byte[] data){
         Integer i = ByteBuffer.wrap(data).getInt();
         Log.d(APP_TAG, "displayData" + i.toString());
-        this.tvStatus.setText(i.toString());
+        Matrix matrix = new Matrix();
+        ivCompass.setScaleType(ImageView.ScaleType.MATRIX);   //required
+        int centerXOnImage=ivCompass.getWidth()/2;
+        int centerYOnImage=ivCompass.getHeight()/2;
+
+
+        matrix.postRotate((float) dataOrientation, ivCompass.getWidth()/2, ivCompass.getHeight()/2);
+
+        matrix.postScale((float)0.8,(float)0.8 , ivCompass.getWidth()/2, ivCompass.getHeight()/2);
+        ivCompass.setImageMatrix(matrix);
+        this.tvHeartRate.setText(i.toString());
     }
 
     @Override
     protected void onDestroy(){
-        mBluetoothGatt.disconnect();
+        if(mBluetoothGatt!=null) {
+            mBluetoothGatt.disconnect();
+        }
         mBluetoothGatt = null;
         super.onDestroy();
     }
@@ -459,6 +467,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float azimuth_angle = event.values[0];
         float pitch_angle = event.values[1];
         float roll_angle = event.values[2];
+        dataOrientation=azimuth_angle;
         //Log.d(APP_TAG,Float.toString(azimuth_angle)+" "+Float.toString(pitch_angle)+" "+Float.toString(roll_angle));
     }
 
@@ -466,6 +475,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
-
-
 }
