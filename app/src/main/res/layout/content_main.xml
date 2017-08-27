@@ -17,8 +17,8 @@
     <FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
-        android:layout_width="800px"
-        android:layout_height="170px"
+        android:layout_width="match_parent"
+        android:layout_height="130dp"
         android:id="@+id/frameNotice"
         android:layout_margin="20px"
         >
@@ -33,13 +33,12 @@
         <TextView
             android:id="@+id/tvNotice"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:text="After shock will occur in 10 seconds, headeast for exit on the right."
             android:textSize="24sp"
             android:textColor="#FFFFFF"
-            android:layout_marginTop="15px"
+            android:layout_marginTop="30dp"
             android:textAlignment="center">
-            <requestFocus></requestFocus>
         </TextView>
     </FrameLayout>
 
@@ -47,12 +46,11 @@
     <FrameLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
-        android:layout_width="200px"
-        android:layout_height="200px"
+        android:layout_width="180dp"
+        android:layout_height="200dp"
         android:layout_below="@id/frameNotice"
-        android:id="@+id/frameHeartRate"
-        android:layout_marginLeft="50px"
-        android:layout_marginRight="50px">
+        android:layout_marginLeft="30dp"
+        android:id="@+id/frameHeartRate">
 
         <ImageView
             android:id="@+id/ivHeartRate"
@@ -65,35 +63,31 @@
             android:id="@+id/tvHeartRate"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:textSize="30sp"
-            android:layout_marginLeft="30px"
-            android:layout_marginTop="60px"
-            android:layout_marginRight="30px"
+            android:textSize="90sp"
             android:textColor="#FFFFFF"
+            android:layout_marginTop="40dp"
             android:textAlignment="center">
             <requestFocus></requestFocus>
+
         </TextView>
     </FrameLayout>
 
     <ImageView
         android:id="@+id/ivCompass"
-        android:layout_width= "200px"
-        android:layout_height="200px"
+        android:layout_width= "190dp"
+        android:layout_height="200dp"
         android:layout_toRightOf="@id/frameHeartRate"
         android:layout_below="@id/frameNotice"
         android:src="@drawable/compass"
-
         />
 
     <ImageView
         android:id="@+id/ivOxygen"
-        android:layout_width= "200px"
-        android:layout_height="200px"
+        android:layout_width= "180dp"
+        android:layout_height="200dp"
         android:layout_toRightOf="@id/ivCompass"
         android:layout_below="@id/frameNotice"
         android:src="@drawable/air"
-        android:layout_marginLeft="50px"
-        android:layout_marginRight="20px"
         />
 
 </RelativeLayout>

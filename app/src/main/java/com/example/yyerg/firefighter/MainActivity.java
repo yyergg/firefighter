@@ -13,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -31,6 +32,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -41,6 +43,7 @@ import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -113,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
 
@@ -121,19 +126,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         tvHeartRate = (TextView) this.findViewById(R.id.tvHeartRate);
         tvHeartRate.setText("00");
+        dataHeartRate = 90;
+
+        dataOrientation = (float)0.0;
 
         ivCompass = (ImageView) this.findViewById(R.id.ivCompass);
-        ivCompass.setMaxHeight(200);
-        ivCompass.setMaxWidth(200);
+
 
         mHandler = new Handler();
         mScanning = true;
-        setupBLE();
+//        setupBLE();
         ScheduledExecutorService scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
 
-        final ScheduledFuture httpHandle =
-                scheduleTaskExecutor.scheduleAtFixedRate(httpThread, 5, 5, TimeUnit.SECONDS);
+//        final ScheduledFuture httpHandle =
+//                scheduleTaskExecutor.scheduleAtFixedRate(httpThread, 5, 5, TimeUnit.SECONDS);
 
+        new Thread(new Runnable() {
+            public void run() {
+                while(true) {
+                    try {
+                        Thread.sleep(1000);
+                        runOnUiThread(new Runnable() {
+                            public void run()
+                            {
+                                byte[] empty = {};
+                                displayData(empty);
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -158,89 +184,89 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return super.onOptionsItemSelected(item);
     }
 
-    private void setupBLE(){
-        this.mbluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        this.mBluetoothAdapter = mbluetoothManager.getAdapter();
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
-        // Checks if Bluetooth is supported on the device.
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-        scanLeDevice(true);
-    }
+//    private void setupBLE(){
+//        this.mbluetoothManager =
+//                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+//        this.mBluetoothAdapter = mbluetoothManager.getAdapter();
+//        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+//            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+//        }
+//        // Checks if Bluetooth is supported on the device.
+//        if (mBluetoothAdapter == null) {
+//            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
+//            finish();
+//            return;
+//        }
+//        scanLeDevice(true);
+//    }
 
-    private Runnable httpThread = new Runnable() {
-        public void run() {
-            sendPostDataToInternet();
-        }
-    };
-
-
-    private void sendPostDataToInternet() {
-        HttpPost httpRequest = new HttpPost("http://chasewind.co/yyergg/android.php");
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        try {
-            params.add(new BasicNameValuePair("username", "Willian Su"));
-            params.add(new BasicNameValuePair("type", "heartrate"));
-            params.add(new BasicNameValuePair("value", "96"));
-            httpRequest.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
-            HttpResponse httpResponse = new DefaultHttpClient().execute(httpRequest);
-            if (httpResponse.getStatusLine().getStatusCode() == 200)
-
-            {
-                String strResult = EntityUtils.toString(httpResponse.getEntity());
-                Log.d(APP_TAG,strResult);
-
-            }
-        }catch(Exception e){
-            Log.d(APP_TAG,e.toString());
-        }
-    }
+//    private Runnable httpThread = new Runnable() {
+//        public void run() {
+//            sendPostDataToInternet();
+//        }
+//    };
 
 
-    private void scanLeDevice(final boolean enable) {
-        mLeDevices.clear();
-        if (enable) {
-            // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                }
-            }, SCAN_PERIOD);
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-        } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        }
-    }
+//    private void sendPostDataToInternet() {
+//        HttpPost httpRequest = new HttpPost("http://chasewind.co/yyergg/android.php");
+//        List<NameValuePair> params = new ArrayList<NameValuePair>();
+//        try {
+//            params.add(new BasicNameValuePair("username", "Willian Su"));
+//            params.add(new BasicNameValuePair("type", "heartrate"));
+//            params.add(new BasicNameValuePair("value", "96"));
+//            httpRequest.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+//            HttpResponse httpResponse = new DefaultHttpClient().execute(httpRequest);
+//            if (httpResponse.getStatusLine().getStatusCode() == 200)
+//
+//            {
+//                String strResult = EntityUtils.toString(httpResponse.getEntity());
+//                Log.d(APP_TAG,strResult);
+//
+//            }
+//        }catch(Exception e){
+//            Log.d(APP_TAG,e.toString());
+//        }
+//    }
+
+
+//    private void scanLeDevice(final boolean enable) {
+//        mLeDevices.clear();
+//        if (enable) {
+//            // Stops scanning after a pre-defined scan period.
+//            mHandler.postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    mScanning = false;
+//                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+//                }
+//            }, SCAN_PERIOD);
+//            mScanning = true;
+//            mBluetoothAdapter.startLeScan(mLeScanCallback);
+//        } else {
+//            mScanning = false;
+//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+//        }
+//    }
 
     // Device scan callback.
-    private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    // Log.d(APP_TAG,"found something!!!!!!!!!!!!!1");
-                    if(device.getAddress().equals("DF:F8:60:A6:B5:62")) {
-                    //if(device.getAddress().equals("00:22:D0:81:0C:89")){
-                        Log.d(APP_TAG, "GOT YOU");
-                        if(!mLeDevices.contains(device)) {
-                            mLeDevices.add(device);
-                            connect(device);
-                        }
-                        mBluetoothAdapter.stopLeScan(null);
-
-                    }
-                }
-            };
+//    private BluetoothAdapter.LeScanCallback mLeScanCallback =
+//            new BluetoothAdapter.LeScanCallback() {
+//                @Override
+//                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+//                    // Log.d(APP_TAG,"found something!!!!!!!!!!!!!1");
+//                    if(device.getAddress().equals("DF:F8:60:A6:B5:62")) {
+//                    //if(device.getAddress().equals("00:22:D0:81:0C:89")){
+//                        Log.d(APP_TAG, "GOT YOU");
+//                        if(!mLeDevices.contains(device)) {
+//                            mLeDevices.add(device);
+//                            connect(device);
+//                        }
+//                        mBluetoothAdapter.stopLeScan(null);
+//
+//                    }
+//                }
+//            };
 
     public boolean connect(BluetoothDevice device) {
         if (mBluetoothAdapter == null) {
@@ -414,8 +440,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     void displayData(byte[] data){
-        Integer i = ByteBuffer.wrap(data).getInt();
-        Log.d(APP_TAG, "displayData" + i.toString());
+//        Integer i = ByteBuffer.wrap(data).getInt();
+//        Log.d(APP_TAG, "displayData" + i.toString());
         Matrix matrix = new Matrix();
         ivCompass.setScaleType(ImageView.ScaleType.MATRIX);   //required
         int centerXOnImage=ivCompass.getWidth()/2;
@@ -426,7 +452,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         matrix.postScale((float)0.8,(float)0.8 , ivCompass.getWidth()/2, ivCompass.getHeight()/2);
         ivCompass.setImageMatrix(matrix);
-        this.tvHeartRate.setText(i.toString());
+//        //this.tvHeartRate.setText(i.toString());
+        Double coin = Math.random();
+        if(coin > 0.5){
+            if(dataHeartRate > 130){
+                dataHeartRate--;
+            } else {
+                dataHeartRate++;
+            }
+        } else {
+            if(dataHeartRate < 70){
+                dataHeartRate++;
+            } else {
+                dataHeartRate--;
+            }
+        }
+        this.tvHeartRate.setText(dataHeartRate.toString());
     }
 
     @Override
@@ -467,7 +508,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float azimuth_angle = event.values[0];
         float pitch_angle = event.values[1];
         float roll_angle = event.values[2];
-        dataOrientation=azimuth_angle;
+        dataOrientation = azimuth_angle;
         //Log.d(APP_TAG,Float.toString(azimuth_angle)+" "+Float.toString(pitch_angle)+" "+Float.toString(roll_angle));
     }
 
