@@ -444,14 +444,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //        Log.d(APP_TAG, "displayData" + i.toString());
         Matrix matrix = new Matrix();
         ivCompass.setScaleType(ImageView.ScaleType.MATRIX);   //required
-        int centerXOnImage=ivCompass.getWidth()/2;
-        int centerYOnImage=ivCompass.getHeight()/2;
 
 
+        //matrix = ivCompass.getImageMatrix();
+        matrix.postRotate((float) dataOrientation, ivCompass.getWidth()/2, ivCompass.getHeight()/2);
         matrix.postRotate((float) dataOrientation, ivCompass.getWidth()/2, ivCompass.getHeight()/2);
 
-        matrix.postScale((float)0.8,(float)0.8 , ivCompass.getWidth()/2, ivCompass.getHeight()/2);
+        //matrix.postScale((float)0.8,(float)0.8 , ivCompass.getWidth()/2, ivCompass.getHeight()/2);
+        Log.d("MATRIX",matrix.toString());
+
         ivCompass.setImageMatrix(matrix);
+
 //        //this.tvHeartRate.setText(i.toString());
         Double coin = Math.random();
         if(coin > 0.5){
